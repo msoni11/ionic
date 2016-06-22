@@ -200,7 +200,12 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
       return;
     }
 
-    self.content.setTranslateX(amount);
+    if ($ionicHistory.isRTL()) {
+      self.content.setTranslateX(-amount);
+    } else {
+      self.content.setTranslateX(amount);
+    }
+
 
     if (amount >= 0) {
       leftShowing = true;
