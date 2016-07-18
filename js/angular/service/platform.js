@@ -174,7 +174,24 @@ IonicModule
           });
 
           return q.promise;
+        },
+
+        /**
+         * @ngdoc method
+         * @name $ionicPlatform#setDir
+         * @description
+         * set direction based on language,
+         * add rtl class in body to write RTL related CSS/SCSS.
+         */
+        setDir: function(languageDirection) {
+          document.documentElement.setAttribute('dir', languageDirection);
+          if (languageDirection === 'rtl') {
+            document.body.classList.add('rtl');
+          } else {
+            document.body.classList.remove('rtl');
+          }
         }
+
       };
 
       return self;
