@@ -355,16 +355,22 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
     function onDragStart(ev) {
       if (!isPrimary) return;
 
+      if (!windowWidth) windowWidth = window.innerWidth;
+
       startDragX = getDragX(ev);
-      if (startDragX > swipeBackHitWidth) return;
+      var isRTL = $ionicHistory.isRTL();
+      if (isRTL) {
+        var swipeBackHitWidthRTL = windowWidth - swipeBackHitWidth;
+        if (startDragX < swipeBackHitWidthRTL) return;
+      } else {
+        if (startDragX > swipeBackHitWidth) return;
+      }
 
       backView = $ionicHistory.backView();
 
       var currentView = $ionicHistory.currentView();
 
       if (!backView || backView.historyId !== currentView.historyId || currentView.canSwipeBack === false) return;
-
-      if (!windowWidth) windowWidth = window.innerWidth;
 
       self.isSwipeFreeze = $ionicScrollDelegate.freezeAllScrolls(true);
 
@@ -400,13 +406,23 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
           x: dragX
         });
 
-        if (dragX >= windowWidth - 15) {
-          onRelease(ev);
-
+        var isRTL = $ionicHistory.isRTL();
+        if (isRTL) {
+          if (dragX <= 15) {
+            onRelease(ev);
+          } else {
+            var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
+            viewTransition.run(step);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          }
         } else {
-          var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
-          viewTransition.run(step);
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          if (dragX >= windowWidth - 15) {
+            onRelease(ev);
+          } else {
+            var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
+            viewTransition.run(step);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          }
         }
 
       }
@@ -427,6 +443,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
         }
 
         var isSwipingRight = (releaseX >= dragPoints[dragPoints.length - 2].x);
+        var isSwipingLeft = (releaseX <= dragPoints[dragPoints.length - 2].x);
         var releaseSwipeCompletion = getSwipeCompletion(releaseX);
         var velocity = Math.abs(startDrag.x - releaseX) / (now - startDrag.t);
 
@@ -434,20 +451,38 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
         disableRenderStartViewId = backView.viewId;
         disableAnimation = (releaseSwipeCompletion < 0.03 || releaseSwipeCompletion > 0.97);
 
-        if (isSwipingRight && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
-          // complete view transition on release
-          var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > windowWidth - 45) ? 'fast' : 'slow';
-          navSwipeAttr(disableAnimation ? '' : speed);
-          backView.go();
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
-
+        var isRTL = $ionicHistory.isRTL();
+        if (isRTL) {
+          if (isSwipingLeft && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
+            // complete view transition on release
+            var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > 45) ? 'fast' : 'slow';
+            navSwipeAttr(disableAnimation ? '' : speed);
+            backView.go();
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
+          } else {
+            // cancel view transition on release
+            navSwipeAttr(disableAnimation ? '' : 'fast');
+            disableRenderStartViewId = null;
+            viewTransition.cancel(!disableAnimation);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
+            disableAnimation = null;
+          }
         } else {
-          // cancel view transition on release
-          navSwipeAttr(disableAnimation ? '' : 'fast');
-          disableRenderStartViewId = null;
-          viewTransition.cancel(!disableAnimation);
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
-          disableAnimation = null;
+          if (isSwipingRight && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
+            // complete view transition on release
+            var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > windowWidth - 45) ? 'fast' : 'slow';
+            navSwipeAttr(disableAnimation ? '' : speed);
+            backView.go();
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
+
+          } else {
+            // cancel view transition on release
+            navSwipeAttr(disableAnimation ? '' : 'fast');
+            disableRenderStartViewId = null;
+            viewTransition.cancel(!disableAnimation);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
+            disableAnimation = null;
+          }
         }
 
       }

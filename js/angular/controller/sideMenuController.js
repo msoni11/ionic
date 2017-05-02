@@ -200,11 +200,7 @@ function($scope, $attrs, $ionicSideMenuDelegate, $ionicPlatform, $ionicBody, $io
       return;
     }
 
-    if ($ionicHistory.isRTL()) {
-      self.content.setTranslateX(-amount);
-    } else {
-      self.content.setTranslateX(amount);
-    }
+    self.content.setTranslateX(amount);
 
 
     if (amount >= 0) {
