@@ -359,10 +359,13 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
 
       startDragX = getDragX(ev);
       var isRTL = $ionicHistory.isRTL();
+      var direction;
       if (isRTL) {
+        var direction = 'forward';
         var swipeBackHitWidthRTL = windowWidth - swipeBackHitWidth;
         if (startDragX < swipeBackHitWidthRTL) return;
       } else {
+        var direction = 'back';
         if (startDragX > swipeBackHitWidth) return;
       }
 
@@ -375,7 +378,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
       self.isSwipeFreeze = $ionicScrollDelegate.freezeAllScrolls(true);
 
       var registerData = {
-        direction: 'back'
+        direction: direction
       };
 
       dragPoints = [];
@@ -389,7 +392,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
       switcher.loadViewElements(registerData);
       switcher.render(registerData);
 
-      viewTransition = switcher.transition('back', $ionicHistory.enabledBack(backView), true);
+      viewTransition = switcher.transition(direction, $ionicHistory.enabledBack(backView), true);
 
       associatedNavBarCtrl = getAssociatedNavBarCtrl();
 
@@ -411,7 +414,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
           if (dragX <= 15) {
             onRelease(ev);
           } else {
-            var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
+            var step = Math.min(Math.max(Math.abs(getSwipeCompletion(dragX)), 0), 1);
             viewTransition.run(step);
             associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
           }
@@ -444,7 +447,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
 
         var isSwipingRight = (releaseX >= dragPoints[dragPoints.length - 2].x);
         var isSwipingLeft = (releaseX <= dragPoints[dragPoints.length - 2].x);
-        var releaseSwipeCompletion = getSwipeCompletion(releaseX);
+        var releaseSwipeCompletion = Math.abs(getSwipeCompletion(releaseX));
         var velocity = Math.abs(startDrag.x - releaseX) / (now - startDrag.t);
 
         // private variables because ui-router has no way to pass custom data using $state.go
