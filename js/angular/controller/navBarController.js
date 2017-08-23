@@ -270,7 +270,12 @@ function($scope, $element, $attrs, $compile, $timeout, $ionicNavBarDelegate, $io
     self.activeTransition = {
       run: function(step) {
         navBarTransition.shouldAnimate = false;
-        navBarTransition.direction = 'back';
+        var isRTL = $ionicHistory.isRTL();
+        if (isRTL) {
+          navBarTransition.direction = 'forward';
+        } else {
+          navBarTransition.direction = 'back';
+        }
         navBarTransition.run(step);
       },
       cancel: function(shouldAnimate, speed, cancelData) {

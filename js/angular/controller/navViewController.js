@@ -358,8 +358,19 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
       if (!isPrimary || !$ionicConfig.views.swipeBackEnabled() || $ionicSideMenuDelegate.isOpenRight() ) return;
 
 
+      if (!windowWidth) windowWidth = window.innerWidth;
+
       startDragX = getDragX(ev);
-      if (startDragX > swipeBackHitWidth) return;
+      var isRTL = $ionicHistory.isRTL();
+      var direction;
+      if (isRTL) {
+        var direction = 'forward';
+        var swipeBackHitWidthRTL = windowWidth - swipeBackHitWidth;
+        if (startDragX < swipeBackHitWidthRTL) return;
+      } else {
+        var direction = 'back';
+        if (startDragX > swipeBackHitWidth) return;
+      }
 
       backView = $ionicHistory.backView();
 
@@ -367,12 +378,10 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
 
       if (!backView || backView.historyId !== currentView.historyId || currentView.canSwipeBack === false) return;
 
-      if (!windowWidth) windowWidth = window.innerWidth;
-
       self.isSwipeFreeze = $ionicScrollDelegate.freezeAllScrolls(true);
 
       var registerData = {
-        direction: 'back'
+        direction: direction
       };
 
       dragPoints = [];
@@ -386,7 +395,7 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
       switcher.loadViewElements(registerData);
       switcher.render(registerData);
 
-      viewTransition = switcher.transition('back', $ionicHistory.enabledBack(backView), true);
+      viewTransition = switcher.transition(direction, $ionicHistory.enabledBack(backView), true);
 
       associatedNavBarCtrl = getAssociatedNavBarCtrl();
 
@@ -403,13 +412,23 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
           x: dragX
         });
 
-        if (dragX >= windowWidth - 15) {
-          onRelease(ev);
-
+        var isRTL = $ionicHistory.isRTL();
+        if (isRTL) {
+          if (dragX <= 15) {
+            onRelease(ev);
+          } else {
+            var step = Math.min(Math.max(Math.abs(getSwipeCompletion(dragX)), 0), 1);
+            viewTransition.run(step);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          }
         } else {
-          var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
-          viewTransition.run(step);
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          if (dragX >= windowWidth - 15) {
+            onRelease(ev);
+          } else {
+            var step = Math.min(Math.max(getSwipeCompletion(dragX), 0), 1);
+            viewTransition.run(step);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.run(step);
+          }
         }
 
       }
@@ -430,27 +449,46 @@ function($scope, $element, $attrs, $compile, $controller, $ionicNavBarDelegate, 
         }
 
         var isSwipingRight = (releaseX >= dragPoints[dragPoints.length - 2].x);
-        var releaseSwipeCompletion = getSwipeCompletion(releaseX);
+        var isSwipingLeft = (releaseX <= dragPoints[dragPoints.length - 2].x);
+        var releaseSwipeCompletion = Math.abs(getSwipeCompletion(releaseX));
         var velocity = Math.abs(startDrag.x - releaseX) / (now - startDrag.t);
 
         // private variables because ui-router has no way to pass custom data using $state.go
         disableRenderStartViewId = backView.viewId;
         disableAnimation = (releaseSwipeCompletion < 0.03 || releaseSwipeCompletion > 0.97);
 
-        if (isSwipingRight && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
-          // complete view transition on release
-          var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > windowWidth - 45) ? 'fast' : 'slow';
-          navSwipeAttr(disableAnimation ? '' : speed);
-          backView.go();
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
-
+        var isRTL = $ionicHistory.isRTL();
+        if (isRTL) {
+          if (isSwipingLeft && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
+            // complete view transition on release
+            var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > 45) ? 'fast' : 'slow';
+            navSwipeAttr(disableAnimation ? '' : speed);
+            backView.go();
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
+          } else {
+            // cancel view transition on release
+            navSwipeAttr(disableAnimation ? '' : 'fast');
+            disableRenderStartViewId = null;
+            viewTransition.cancel(!disableAnimation);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
+            disableAnimation = null;
+          }
         } else {
-          // cancel view transition on release
-          navSwipeAttr(disableAnimation ? '' : 'fast');
-          disableRenderStartViewId = null;
-          viewTransition.cancel(!disableAnimation);
-          associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
-          disableAnimation = null;
+          if (isSwipingRight && (releaseSwipeCompletion > 0.5 || velocity > 0.1)) {
+            // complete view transition on release
+            var speed = (velocity > 0.5 || velocity < 0.05 || releaseX > windowWidth - 45) ? 'fast' : 'slow';
+            navSwipeAttr(disableAnimation ? '' : speed);
+            backView.go();
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.complete(!disableAnimation, speed);
+
+          } else {
+            // cancel view transition on release
+            navSwipeAttr(disableAnimation ? '' : 'fast');
+            disableRenderStartViewId = null;
+            viewTransition.cancel(!disableAnimation);
+            associatedNavBarCtrl && associatedNavBarCtrl.activeTransition && associatedNavBarCtrl.activeTransition.cancel(!disableAnimation, 'fast', cancelData);
+            disableAnimation = null;
+          }
         }
 
       }

@@ -743,6 +743,32 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
       return nextViewOptions;
     },
 
+    /**
+     * @ngdoc method
+     * @name $ionicHistory#isRTL
+     * @description Check whehter current view is in RTL direction.
+     *
+     */
+    isRTL : function() {
+      return document.documentElement.getAttribute('dir') === 'rtl';
+    },
+
+    /**
+     * @ngdoc method
+     * @name $ionicHistory#switchDirection
+     * @description Switch direction in RTL view and default when in LTR view.
+     *
+     */
+    switchDirection: function() {
+      if (this.isRTL()) {
+        DIRECTION_FORWARD = 'back';
+        DIRECTION_BACK = 'forward';
+      } else {
+        DIRECTION_FORWARD = 'forward';
+        DIRECTION_BACK = 'back';
+      }
+    },
+
     isAbstractEle: function(ele, viewLocals) {
       if (viewLocals && viewLocals.$$state && viewLocals.$$state.self['abstract']) {
         return true;
