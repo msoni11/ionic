@@ -8387,7 +8387,11 @@ ionic.views.Slider = ionic.views.View.inherit({
         slide.setAttribute('data-index', pos);
 
         if (browser.transitions) {
-          slide.style.left = (pos * -width) + 'px';
+          if (options.isRTL) {
+            slide.style.right = (pos * -width) + 'px';
+          } else {
+            slide.style.left = (pos * -width) + 'px';
+          }
           move(pos, index > pos ? -width : (index < pos ? width : 0), 0);
         }
 
@@ -8399,7 +8403,13 @@ ionic.views.Slider = ionic.views.View.inherit({
         move(circle(index + 1), width, 0);
       }
 
-      if (!browser.transitions) element.style.left = (index * -width) + 'px';
+      if (!browser.transitions) {
+        if (options.isRTL) {
+          element.style.right = (index * -width) + 'px';
+        } else {
+          element.style.left = (index * -width) + 'px';
+        }
+      }
 
       container.style.visibility = 'visible';
 
