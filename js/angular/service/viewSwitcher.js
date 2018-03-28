@@ -71,7 +71,13 @@ function($timeout, $document, $q, $ionicClickBlock, $ionicConfig, $ionicNavBarDe
                 viewEle.data(DATA_DESTROY_ELE, true);
 
               } else {
-                enteringEle = viewEle;
+                // custom indepth #434
+                var myobj = viewEle[0].tagName;
+                if (myobj === "DIV") {
+                  renderStart = true;
+                } else {
+                  enteringEle = viewEle;
+                }
               }
 
             } else if (isDefined(navViewActiveEleId) && viewEle.data(DATA_ELE_IDENTIFIER) === navViewActiveEleId) {

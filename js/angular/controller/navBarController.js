@@ -285,6 +285,11 @@ function($scope, $element, $attrs, $compile, $timeout, $ionicNavBarDelegate, $io
         navBarTransition.shouldAnimate = shouldAnimate;
         navBarTransition.run(0);
         self.activeTransition = navBarTransition = null;
+        for (var x = 0; x < $ionicNavBarDelegate._instances.length; x++) {
+          if ($ionicNavBarDelegate._instances[x] !== self) {
+            $ionicNavBarDelegate._instances[x].visibleBar(true);
+          }
+        }
 
         var runApply;
         if (cancelData.showBar !== self.showBar()) {

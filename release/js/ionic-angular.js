@@ -4700,7 +4700,13 @@ function($timeout, $document, $q, $ionicClickBlock, $ionicConfig, $ionicNavBarDe
                 viewEle.data(DATA_DESTROY_ELE, true);
 
               } else {
-                enteringEle = viewEle;
+                // custom indepth #434
+                var myobj = viewEle[0].tagName;
+                if (myobj === "DIV") {
+                  renderStart = true;
+                } else {
+                  enteringEle = viewEle;
+                }
               }
 
             } else if (isDefined(navViewActiveEleId) && viewEle.data(DATA_ELE_IDENTIFIER) === navViewActiveEleId) {
@@ -6271,6 +6277,11 @@ function($scope, $element, $attrs, $compile, $timeout, $ionicNavBarDelegate, $io
         navBarTransition.shouldAnimate = shouldAnimate;
         navBarTransition.run(0);
         self.activeTransition = navBarTransition = null;
+        for (var x = 0; x < $ionicNavBarDelegate._instances.length; x++) {
+          if ($ionicNavBarDelegate._instances[x] !== self) {
+            $ionicNavBarDelegate._instances[x].visibleBar(true);
+          }
+        }
 
         var runApply;
         if (cancelData.showBar !== self.showBar()) {
