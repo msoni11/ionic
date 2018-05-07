@@ -60760,7 +60760,10 @@ function($scope,
       if (!scrollView) {
         return;
       }
-      scrollView.scrollTo(0, 0, !!shouldAnimate);
+      // custom indepth - issue #449
+      if (typeof scrollView !== 'undefined' && scrollView !== null) {
+        scrollView.scrollTo(0, 0, !!shouldAnimate);
+      }
     });
   };
 
